@@ -23,7 +23,7 @@
       displayForm('');
     }
     function displayForm($x) {
-      echo "<form action='index.php' method='POST'>City Name: <input type='text' name='city' value='$x'><input type='submit' value='Get Weather'></form>";
+      echo "<form action='index.php' method='POST'>City Name: <input type='text' name='city' value='$x'><input type='submit' name='submit' value='Get Weather'></form>";
     }
   ?>
 </body>
