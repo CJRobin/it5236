@@ -14,7 +14,7 @@
         $data = json_decode($response);
         $temp = $data->{'main'}->{'temp'};
         displayForm($city);
-        echo "The temperature in $city is: $temp";
+        echo "The temperature in $city is: $temp&#176;";
       } else {
         displayForm($city);
         echo "Please enter a city name.<br>";
