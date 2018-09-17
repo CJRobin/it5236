@@ -12,7 +12,7 @@
         $response = file_get_contents($url);
 
         $data = json_decode($response);
-        $temp = $data->('main')->('temp');
+        $temp = $data->{'main'}->{'temp'};
         displayForm($city);
         echo "The temperature in $city is: $temp";
       } else {
@@ -23,7 +23,8 @@
       displayForm('');
     }
     function displayForm($x) {
-      echo "<form action='index.php' method='POST'>City Name: <input type='text' name='city' value='$x'><input type='submit' value='Get Weather'></form></body></html>";
+      echo "<form action='index.php' method='POST'>City Name: <input type='text' name='city' value='$x'><input type='submit' value='Get Weather'></form>";
     }
   ?>
 </body>
+</html>
