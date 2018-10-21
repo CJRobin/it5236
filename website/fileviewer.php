@@ -20,10 +20,11 @@ $name = $_GET["file"];
 	<meta name="description" content="Russell Thackston's personal website for IT 5233">
 	<meta name="author" content="Russell Thackston">
 	<link rel="stylesheet" href="css/style.css">
+	<link rel="stylesheet" href="css/newStyle.min.css">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 
-<!--1. Display Errors if any exists 
+<!--1. Display Errors if any exists
 	2. If no errors display things -->
 <body>
 	<?php include 'include/header.php'; ?>
@@ -31,6 +32,6 @@ $name = $_GET["file"];
 	<div>
 		<?php echo $app->getFile($name); ?>
 	</div>
-	
+
 </body>
 </html>

@@ -1,5 +1,5 @@
 <?php
-	
+
 // Import the application classes
 require_once('include/classes.php');
 
@@ -22,12 +22,12 @@ $users = $app->getUsers($errors);
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 	if ($_POST['attachmenttype'] == "add") {
-		
+
 		$name = $_POST['name'];;
 		$extension = $_POST['extension'];;
-	
+
 		$attachmenttypeid = $app->newAttachmentType($name, $extension, $errors);
-		
+
 		if ($attachmenttypeid != NULL) {
 			$messages[] = "New attachment type added";
 		}
@@ -49,6 +49,7 @@ $attachmentTypes = $app->getAttachmentTypes($errors);
 	<meta name="description" content="Russell Thackston's personal website for IT 5233">
 	<meta name="author" content="Russell Thackston">
 	<link rel="stylesheet" href="css/style.css">
+	<link rel="stylesheet" href="css/newStyle.min.css">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>

@@ -49,17 +49,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 	<meta name="description" content="Russell Thackston's personal website for IT 5233">
 	<meta name="author" content="Russell Thackston">
 	<link rel="stylesheet" href="css/style.css">
+	<link rel="stylesheet" href="css/newStyle.min.css">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<!--1. Display Errors if any exists 
+<!--1. Display Errors if any exists
 	2. Display Registration form (sticky):  Username, Password, Question, and Answer -->
 <body>
 	<?php include 'include/header.php'; ?>
-	
+
 	<h2>Register</h2>
-	
+
 	<?php include('include/messages.php'); ?>
-		
+
 	<div>
 		<form action="register.php" method="post">
 			<input type="text" name="username" id="username" placeholder="Pick a username" value="<?php echo $username; ?>" />
