@@ -26,6 +26,7 @@ input[type=submit], input[type=button] {
   border: 0;
   color: white;
   background-color: #2196F3;
+  cursor: pointer;
   &:hover {
     background-color: #1976D2;
   }
@@ -40,7 +41,7 @@ input[type=submit], input[type=button] {
   }
 }
 
-.things, .newthing, .footer, h2 {
+.things, .newthing, .footer, h2, .topiccontainer, .comments, .newcomment {
   width: 90vw;
   margin: 12px auto;
 }
