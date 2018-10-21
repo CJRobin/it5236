@@ -1,1 +1,1 @@
-h1{background-color:#1976D2;color:white;padding:12px;margin:0}.nav a{text-decoration:none}
+@import url("https://fonts.googleapis.com/css?family=Montserrat:300,400,700");body{font-family:'Montserrat', sans-serif}h1{background-color:#1976D2;color:white;padding:12px;margin:0}.nav a{text-decoration:none;color:white}.nav a:hover{color:#90CAF9}

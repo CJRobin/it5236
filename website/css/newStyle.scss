@@ -1,3 +1,11 @@
+@import url('https://fonts.googleapis.com/css?family=Montserrat:300,400,700');
+
+body {
+  font-family: 'Montserrat', sans-serif;
+}
+
+
+
 h1 {
     background-color: #1976D2;
     color: white;
@@ -8,5 +16,9 @@ h1 {
 .nav {
   a {
     text-decoration: none;
+    color: white;
+    &:hover {
+      color: #90CAF9;
+    }
   }
 }
