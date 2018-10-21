@@ -216,7 +216,7 @@ class Application {
 
               // Send reset email
               $pageLink = (isset($_SERVER['HTTPS']) ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-              $pageLink = str_replace("register.php", "login.php", $pageLink);
+              $pageLink = str_replace("register.php", "twofactor.php", $pageLink);
               $to      = $email;
               $subject = 'Confirm your email address';
               $message = "A request has been made to create an account at https://russellthackston.me for this email address. ".
@@ -698,8 +698,8 @@ class Application {
                     // Create a new session for this user ID in the database
                     $userid = $row['userid'];
                     $email = $row['email'];
-                    $this->newSession($userid, $errors);
                     $this->sendVerificationEmail($userid, $email, $errors);
+                    $this->newSession($userid, $errors);
                     $this->auditlog("login", "success: $username, $userid");
 
                 }

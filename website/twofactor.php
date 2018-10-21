@@ -14,10 +14,10 @@ $errors = array();
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
 
 	if (isset($_GET['id'])) {
-		
+
 		$success = $app->processEmailValidation($_GET['id'], $errors);
 		if ($success) {
-		    header("Location: /thing.php");
+		    header("Location: thing.php");
 		}
 
 	}
