@@ -122,7 +122,7 @@ class Application {
           if (empty($registrationcode)) {
               $errors[] = "Missing registration code";
           }
-          
+
           // Only try to insert the data into the database if there are no validation errors
           if (sizeof($errors) == 0) {
 
@@ -169,7 +169,7 @@ class Application {
   						$errors[] = "Server error";
   					}
   				} else if($httpCode == 200) {
-  					// $this->sendValidationEmail($userid, $email, $errors);
+  					$this->sendValidationEmail($userid, $email, $errors);
   				}
   			}
 
@@ -184,6 +184,56 @@ class Application {
           } else {
               return FALSE;
           }
+      }
+
+
+      protected function sendVerificationEmail($userid, $email, &$errors) {
+
+          // Connect to the database
+          $dbh = $this->getConnection();
+
+          $this->auditlog("sendValidationEmail", "Sending code to $email");
+
+          $validationid = bin2hex(random_bytes(16));
+
+          // Construct a SQL statement to perform the insert operation
+          $sql = "INSERT INTO emailvalidation (emailvalidationid, userid, email, emailsent) " .
+              "VALUES (:emailvalidationid, :userid, :email, NOW())";
+
+          // Run the SQL select and capture the result code
+          $stmt = $dbh->prepare($sql);
+          $stmt->bindParam(":emailvalidationid", $validationid);
+          $stmt->bindParam(":userid", $userid);
+          $stmt->bindParam(":email", $email);
+          $result = $stmt->execute();
+          if ($result === FALSE) {
+              $errors[] = "An unexpected error occurred sending the validation email";
+              $this->debug($stmt->errorInfo());
+              $this->auditlog("register error", $stmt->errorInfo());
+          } else {
+
+              $this->auditlog("sendValidationEmail", "Sending message to $email");
+
+              // Send reset email
+              $pageLink = (isset($_SERVER['HTTPS']) ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+              $pageLink = str_replace("register.php", "login.php", $pageLink);
+              $to      = $email;
+              $subject = 'Confirm your email address';
+              $message = "A request has been made to create an account at https://russellthackston.me for this email address. ".
+                  "If you did not make this request, please ignore this message. No other action is necessary. ".
+                  "To confirm this address, please click the following link: $pageLink?id=$validationid";
+              $headers = 'From: webmaster@russellthackston.me' . "\r\n" .
+                  'Reply-To: webmaster@russellthackston.me' . "\r\n";
+
+              mail($to, $subject, $message, $headers);
+
+              $this->auditlog("sendValidationEmail", "Message sent to $email");
+
+          }
+
+          // Close the connection
+          $dbh = NULL;
+
       }
 
     // Send an email to validate the address
@@ -227,7 +277,7 @@ class Application {
 
             mail($to, $subject, $message, $headers);
 
-            $this->auditlog("sendValidationEmail", "Message sent to $email");
+            $this->auditlog("sendVerificationEmail", "Message sent to $email");
 
         }
 
@@ -434,7 +484,6 @@ class Application {
             // Connect to the database
             $dbh = $this->getConnection();
 
-            // Hash the user's password
             $passwordhash = password_hash($password, PASSWORD_DEFAULT);
 
             // Construct a SQL statement to perform the select operation
@@ -648,7 +697,9 @@ class Application {
 
                     // Create a new session for this user ID in the database
                     $userid = $row['userid'];
+                    $email = $row['email'];
                     $this->newSession($userid, $errors);
+                    $this->sendVerificationEmail($userid, $email, $errors);
                     $this->auditlog("login", "success: $username, $userid");
 
                 }
