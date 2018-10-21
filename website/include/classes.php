@@ -192,7 +192,7 @@ class Application {
           // Connect to the database
           $dbh = $this->getConnection();
 
-          $this->auditlog("sendValidationEmail", "Sending code to $email");
+          $this->auditlog("sendVerificationEmail", "Sending code to $email");
 
           $validationid = bin2hex(random_bytes(16));
 
@@ -654,7 +654,7 @@ class Application {
             $dbh = $this->getConnection();
 
             // Construct a SQL statement to perform the insert operation
-            $sql = "SELECT userid, passwordhash, emailvalidated FROM users " .
+            $sql = "SELECT userid, passwordhash, email, emailvalidated FROM users " .
                 "WHERE username = :username";
 
             // Run the SQL select and capture the result code
