@@ -235,7 +235,140 @@ class Application {
           $dbh = NULL;
 
       }
+      // Send an email to validate the address
+      protected function sendValidationEmail($userid, $email, &$errors) {
 
+          // Connect to the database
+          $dbh = $this->getConnection();
+
+          $this->auditlog("sendValidationEmail", "Sending message to $email");
+
+          $validationid = bin2hex(random_bytes(16));
+
+          // Construct a SQL statement to perform the insert operation
+          $sql = "INSERT INTO emailvalidation (emailvalidationid, userid, email, emailsent) " .
+              "VALUES (:emailvalidationid, :userid, :email, NOW())";
+
+          // Run the SQL select and capture the result code
+          $stmt = $dbh->prepare($sql);
+          $stmt->bindParam(":emailvalidationid", $validationid);
+          $stmt->bindParam(":userid", $userid);
+          $stmt->bindParam(":email", $email);
+          $result = $stmt->execute();
+          if ($result === FALSE) {
+              $errors[] = "An unexpected error occurred sending the validation email";
+              $this->debug($stmt->errorInfo());
+              $this->auditlog("register error", $stmt->errorInfo());
+          } else {
+
+              $this->auditlog("sendValidationEmail", "Sending message to $email");
+
+              // Send reset email
+              $pageLink = (isset($_SERVER['HTTPS']) ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+              $pageLink = str_replace("register.php", "login.php", $pageLink);
+              $to      = $email;
+              $subject = 'Confirm your email address';
+              $message = "A request has been made to create an account at https://russellthackston.me for this email address. ".
+                  "If you did not make this request, please ignore this message. No other action is necessary. ".
+                  "To confirm this address, please click the following link: $pageLink?id=$validationid";
+              $headers = 'From: webmaster@russellthackston.me' . "\r\n" .
+                  'Reply-To: webmaster@russellthackston.me' . "\r\n";
+
+              mail($to, $subject, $message, $headers);
+
+              $this->auditlog("sendVerificationEmail", "Message sent to $email");
+
+          }
+
+          // Close the connection
+          $dbh = NULL;
+
+      }
+
+      // Send an email to validate the address
+      public function processEmailValidation($validationid, &$errors) {
+
+          $success = FALSE;
+
+          // Connect to the database
+          $dbh = $this->getConnection();
+
+          $this->auditlog("processEmailValidation", "Received: $validationid");
+
+          // Construct a SQL statement to perform the insert operation
+          $sql = "SELECT userid FROM emailvalidation WHERE emailvalidationid = :emailvalidationid";
+
+          // Run the SQL select and capture the result code
+          $stmt = $dbh->prepare($sql);
+          $stmt->bindParam(":emailvalidationid", $validationid);
+          $result = $stmt->execute();
+
+          if ($result === FALSE) {
+
+              $errors[] = "An unexpected error occurred processing your email validation request";
+              $this->debug($stmt->errorInfo());
+              $this->auditlog("processEmailValidation error", $stmt->errorInfo());
+
+          } else {
+
+              if ($stmt->rowCount() != 1) {
+
+                  $errors[] = "That does not appear to be a valid request";
+                  $this->debug($stmt->errorInfo());
+                  $this->auditlog("processEmailValidation", "Invalid request: $validationid");
+
+
+              } else {
+
+                  $userid = $stmt->fetch(PDO::FETCH_ASSOC)['userid'];
+
+                  // Construct a SQL statement to perform the insert operation
+                  $sql = "DELETE FROM emailvalidation WHERE emailvalidationid = :emailvalidationid";
+
+                  // Run the SQL select and capture the result code
+                  $stmt = $dbh->prepare($sql);
+                  $stmt->bindParam(":emailvalidationid", $validationid);
+                  $result = $stmt->execute();
+
+                  if ($result === FALSE) {
+
+                      $errors[] = "An unexpected error occurred processing your email validation request";
+                      $this->debug($stmt->errorInfo());
+                      $this->auditlog("processEmailValidation error", $stmt->errorInfo());
+
+                  } else if ($stmt->rowCount() == 1) {
+
+                      $this->auditlog("processEmailValidation", "Email address validated: $validationid");
+
+                      // Construct a SQL statement to perform the insert operation
+                      $sql = "UPDATE users SET emailValidation = 1 WHERE userid = :userid";
+
+                      // Run the SQL select and capture the result code
+                      $stmt = $dbh->prepare($sql);
+                      $stmt->bindParam(":userid", $userid);
+                      $result = $stmt->execute();
+
+                      $success = TRUE;
+
+                  } else {
+
+                      $errors[] = "That does not appear to be a valid request";
+                      $this->debug($stmt->errorInfo());
+                      $this->auditlog("processEmailValidation", "Invalid request: $validationid");
+
+                  }
+
+              }
+
+          }
+
+
+          // Close the connection
+          $dbh = NULL;
+
+          return $success;
+
+      }
     // Send an email to validate the address
     protected function sendValidationEmail($userid, $email, &$errors) {
 
@@ -287,7 +420,7 @@ class Application {
     }
 
     // Send an email to validate the address
-    public function processEmailValidation($validationid, &$errors) {
+    public function processEmailVerification($validationid, &$errors) {
 
         $success = FALSE;
 
@@ -348,7 +481,7 @@ class Application {
                     $stmt = $dbh->prepare($sql);
                     $stmt->bindParam(":userid", $userid);
                     $result = $stmt->execute();
-
+                    $this->newSession($userid);
                     $success = TRUE;
 
                 } else {
@@ -699,7 +832,6 @@ class Application {
                     $userid = $row['userid'];
                     $email = $row['email'];
                     $this->sendVerificationEmail($userid, $email, $errors);
-                    $this->newSession($userid, $errors);
                     $this->auditlog("login", "success: $username, $userid");
 
                 }
