@@ -216,12 +216,12 @@ class Application {
 
               // Send reset email
               $pageLink = (isset($_SERVER['HTTPS']) ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-              $pageLink = str_replace("register.php", "twofactor.php", $pageLink);
+              $pageLink = str_replace("login.php", "twofactor.php", $pageLink);
               $to      = $email;
               $subject = 'Confirm your email address';
-              $message = "A request has been made to create an account at https://russellthackston.me for this email address. ".
+              $message = "A request has been made to login to your account at https://russellthackston.me. ".
                   "If you did not make this request, please ignore this message. No other action is necessary. ".
-                  "To confirm this address, please click the following link: $pageLink?id=$validationid";
+                  "To confirm your login, please click the following link: $pageLink?id=$validationid";
               $headers = 'From: webmaster@russellthackston.me' . "\r\n" .
                   'Reply-To: webmaster@russellthackston.me' . "\r\n";
 
