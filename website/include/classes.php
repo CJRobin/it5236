@@ -219,9 +219,9 @@ class Application {
               $pageLink = str_replace("login.php", "twofactor.php", $pageLink);
               $to      = $email;
               $subject = 'Confirm your email address';
-              $message = "A request has been made to login to your account at https://russellthackston.me. ".
+              $message = "A request has been made to login to your account at http://54.164.188.229/it5236/website. ".
                   "If you did not make this request, please ignore this message. No other action is necessary. ".
-                  "To confirm your login, please click the following link: $pageLink?id=$validationid";
+                  "To confirm your login, please click the following link: $pageLink?id=$validationid or copy and past this code '$validationid' into the OTP box";
               $headers = 'From: webmaster@russellthackston.me' . "\r\n" .
                   'Reply-To: webmaster@russellthackston.me' . "\r\n";
 
