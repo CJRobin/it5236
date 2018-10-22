@@ -194,7 +194,7 @@ class Application {
 
           $this->auditlog("sendVerificationEmail", "Sending code to $email");
 
-          $validationid = bin2hex(random_bytes(16));
+          $validationid = bin2hex(random_bytes(6));
 
           // Construct a SQL statement to perform the insert operation
           $sql = "INSERT INTO emailvalidation (emailvalidationid, userid, email, emailsent) " .
