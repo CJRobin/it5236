@@ -192,7 +192,7 @@ class Application {
           // Connect to the database
           $dbh = $this->getConnection();
 
-          $this->auditlog("sendVerificationEmail", "Sending code to $email");
+          $this->auditlog("sendOTPEmail", "Sending code to $email");
 
           $validationid = rand(100000, 999999);
 
@@ -207,18 +207,18 @@ class Application {
           $stmt->bindParam(":email", $email);
           $result = $stmt->execute();
           if ($result === FALSE) {
-              $errors[] = "An unexpected error occurred sending the validation email";
+              $errors[] = "An unexpected error occurred sending the otp email";
               $this->debug($stmt->errorInfo());
-              $this->auditlog("register error", $stmt->errorInfo());
+              $this->auditlog("login error", $stmt->errorInfo());
           } else {
 
-              $this->auditlog("sendValidationEmail", "Sending message to $email");
+              $this->auditlog("sendOTPEmail", "Sending message to $email");
 
               // Send reset email
               $pageLink = (isset($_SERVER['HTTPS']) ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
               $pageLink = str_replace("login.php", "twofactor.php", $pageLink);
               $to      = $email;
-              $subject = 'Confirm your email address';
+              $subject = 'Login Request';
               $message = "A request has been made to login to your account at http://54.164.188.229/it5236/website. ".
                   "If you did not make this request, please ignore this message. No other action is necessary. ".
                   "To confirm your login, please click the following link: $pageLink?id=$validationid or copy and past this code '$validationid' into the OTP box";
@@ -227,7 +227,7 @@ class Application {
 
               mail($to, $subject, $message, $headers);
 
-              $this->auditlog("sendValidationEmail", "Message sent to $email");
+              $this->auditlog("sendOTPEmail", "Message sent to $email");
 
           }
 
@@ -378,7 +378,7 @@ class Application {
         // Connect to the database
         $dbh = $this->getConnection();
 
-        $this->auditlog("processEmailValidation", "Received: $validationid");
+        $this->auditlog("processEmailOTP", "Received: $validationid");
 
         // Construct a SQL statement to perform the insert operation
         $sql = "SELECT userid FROM emailvalidation WHERE emailvalidationid = :emailvalidationid";
@@ -390,9 +390,9 @@ class Application {
 
         if ($result === FALSE) {
 
-            $errors[] = "An unexpected error occurred processing your email validation request";
+            $errors[] = "An unexpected error occurred processing your email OTP request";
             $this->debug($stmt->errorInfo());
-            $this->auditlog("processEmailValidation error", $stmt->errorInfo());
+            $this->auditlog("processEmailOTP error", $stmt->errorInfo());
 
         } else {
 
@@ -400,7 +400,7 @@ class Application {
 
                 $errors[] = "That does not appear to be a valid request";
                 $this->debug($stmt->errorInfo());
-                $this->auditlog("processEmailValidation", "Invalid request: $validationid");
+                $this->auditlog("processEmailOTP", "Invalid request: $validationid");
 
 
             } else {
@@ -419,11 +419,11 @@ class Application {
 
                     $errors[] = "An unexpected error occurred processing your email validation request";
                     $this->debug($stmt->errorInfo());
-                    $this->auditlog("processEmailValidation error", $stmt->errorInfo());
+                    $this->auditlog("processEmailOTP error", $stmt->errorInfo());
 
                 } else if ($stmt->rowCount() == 1) {
 
-                    $this->auditlog("processEmailValidation", "Email address validated: $validationid");
+                    $this->auditlog("processEmailOTP", "Email address validated: $validationid");
 
                     $this->newSession($userid);
                     $success = TRUE;
@@ -432,7 +432,7 @@ class Application {
 
                     $errors[] = "That does not appear to be a valid request";
                     $this->debug($stmt->errorInfo());
-                    $this->auditlog("processEmailValidation", "Invalid request: $validationid");
+                    $this->auditlog("processEmailOTP", "Invalid request: $validationid");
 
                 }
 
