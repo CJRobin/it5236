@@ -41,7 +41,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
 
 <body>
 	<?php include 'include/header.php'; ?>
+	<div>
+		<form method="get" action="twofactor.php">
 
+			<input type="text" name="id" id="username" placeholder="One Time Password" value="" />
+			<br/>
+			<input type="submit" value="Login" name="login" />
+		</form>
+	</div>
 	<?php include 'include/footer.php'; ?>
 	<script src="js/site.js"></script>
 </body>

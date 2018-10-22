@@ -341,7 +341,7 @@ class Application {
                       $this->auditlog("processEmailValidation", "Email address validated: $validationid");
 
                       // Construct a SQL statement to perform the insert operation
-                      $sql = "UPDATE users SET emailValidation = 1 WHERE userid = :userid";
+                      $sql = "UPDATE users SET emailValidated = 1 WHERE userid = :userid";
 
                       // Run the SQL select and capture the result code
                       $stmt = $dbh->prepare($sql);
@@ -425,13 +425,6 @@ class Application {
 
                     $this->auditlog("processEmailValidation", "Email address validated: $validationid");
 
-                    // Construct a SQL statement to perform the insert operation
-                    $sql = "UPDATE users SET isLoggedin = 1 WHERE userid = :userid";
-
-                    // Run the SQL select and capture the result code
-                    $stmt = $dbh->prepare($sql);
-                    $stmt->bindParam(":userid", $userid);
-                    $result = $stmt->execute();
                     $this->newSession($userid);
                     $success = TRUE;
 
