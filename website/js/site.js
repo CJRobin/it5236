@@ -8,7 +8,7 @@ function localStorage() {
 		alert("hi");
 		let checkBox = document.getElementById("storage").checked;
 		alert(checkBox);
-    if(checkBox == true) {
+    if(checkBox === true) {
 			localStorage.setItem("user", document.getElementById("username").value);
 			alert("ischecked");
 			return true;
