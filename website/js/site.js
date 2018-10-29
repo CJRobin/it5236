@@ -10,7 +10,7 @@ function localStorage() {
 		alert(checkBox);
     if(checkBox) {
 			let item = document.getElementById("username").value
-			localStorage.setItem("user", item);
+			window.localStorage.setItem("user", item);
 			return true;
 		}
 		return false;
