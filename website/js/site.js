@@ -13,4 +13,3 @@ function localStore() {
 		}
 		return true;
 }
-localStorage.setItem('username', "uh");
