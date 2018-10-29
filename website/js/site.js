@@ -5,8 +5,10 @@ function checkLength10(elem){
 }
 
 function localStorage() {
+		alert("hi");
     if(document.getElementById("storage").checked) {
 			localStorage.setItem("user", document.getElementById("username").value);
+			alert("ischecked");
 			return true;
 		}
 		return false;
