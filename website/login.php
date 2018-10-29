@@ -78,7 +78,7 @@ if (isset($_GET['register']) && $_GET['register']== 'success') {
 	<?php include('include/messages.php'); ?>
 
 	<div>
-		<form onsubmit="return localStorage()" method="post" action="login.php">
+		<form onsubmit="return localStore()" method="post" action="login.php">
 
 			<input type="text" name="username" id="username" placeholder="Username" value="<?php echo $username; ?>" />
 			<br/>
