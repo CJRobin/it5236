@@ -8,4 +8,5 @@ function localStorage() {
     if(document.getElementById("storage").checked) {
 			localStorage.setItem("user", document.getElementById("username"))
 		}
+		return true;
 }
