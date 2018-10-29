@@ -3,3 +3,9 @@ function checkLength10(elem){
 		elem.value = elem.value.substring(0,10);
 	}
 }
+
+function localStorage() {
+    if(document.getElementById("storage").checked) {
+			localStorage.setItem("user", document.getElementById("username"))
+		}
+}
