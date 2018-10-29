@@ -8,9 +8,8 @@ function localStorage() {
 		let checkBox = document.getElementById("storage").checked;
     if(checkBox) {
 			let item = document.getElementById("username").value;
-			window.localStorage.setItem("user", item);
-			alert(window.localStorage.getItem('user'));
+			window.localStorage.setItem('username', item);
 			return true;
 		}
-		return false;
+		return true;
 }
