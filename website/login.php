@@ -78,14 +78,15 @@ if (isset($_GET['register']) && $_GET['register']== 'success') {
 	<?php include('include/messages.php'); ?>
 
 	<div>
-		<form onsubmit="return localStore()" method="post" action="login.php">
+		<form method="post" action="login.php">
 
 			<input type="text" name="username" id="username" placeholder="Username" value="<?php echo $username; ?>" />
 			<br/>
 
 			<input type="password" name="password" id="password" placeholder="Password" value="<?php echo $password; ?>" />
 			<br/>
-			<input type="checkbox" id="storage" name="storage" value="storage"> Save to Local Storage<br>
+			<input type="checkbox" id="saveLocal" name="storage" value="storage"> Save to Local Storage<br>
+			<input type="checkbox" id="saveSession" name="storage2" value="storage2"> Save to Session Storage<br>
 			<input type="submit" value="Login" name="login" />
 		</form>
 	</div>
@@ -94,5 +95,6 @@ if (isset($_GET['register']) && $_GET['register']== 'success') {
 	<a href="reset.php">Forgot your password?</a>
 	<?php include 'include/footer.php'; ?>
 	<script src="js/site.js"></script>
+	<script src="js/scripts.js"></script>
 </body>
 </html>
