@@ -80,7 +80,7 @@ if (isset($_GET['register']) && $_GET['register']== 'success') {
 	<div>
 		<form method="post" action="login.php">
 
-			<input type="text" name="username" id="username" placeholder="Username" value="<?php echo $username; ?>" />
+			<input type="text" name="username" id="usernameField" placeholder="Username" value="<?php echo $username; ?>" />
 			<br/>
 
 			<input type="password" name="password" id="password" placeholder="Password" value="<?php echo $password; ?>" />
