@@ -29,7 +29,7 @@ function doPageLoad(e) {
 		document.getElementById("saveSession").checked = true;
 		document.getElementById("usernameField").value = usernameSession;
 	} else {
-		document.getElementById("noSave").checked = true;
+		//document.getElementById("noSave").checked = true;
 	}
 }
 
