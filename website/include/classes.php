@@ -693,7 +693,7 @@ class Application {
                 }
               } else if($httpCode == 200) {
                 $user = json_decode($response, true)[0];
-                error_log($user['userid'], 0)
+                error_log($user['userid'], 0);
               }
             }
 
