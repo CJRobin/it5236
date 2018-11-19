@@ -694,7 +694,9 @@ class Application {
                 }
               } else if($httpCode == 200) {
                 $user = json_decode(json_decode($response));
+
               }
+              json_decode($response);
             }
 
             curl_close($ch);
