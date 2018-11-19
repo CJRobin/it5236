@@ -464,17 +464,16 @@ class Application {
             $errors[] = "Server error";
           }
         } else if($httpCode == 200) {
+          $user = $this->getSessionUser($errors);
           $this->auditlog("processEmailValidation", "Email address validated: $validationid");
-
-          $success = TRUE;
+          $this->newSession($user['userid'], $errors);
+          $success = true;
         }
       }
 
       curl_close($ch);
 
       return $success;
-
-
     }
 
     // Creates a new session in the database for the specified user
