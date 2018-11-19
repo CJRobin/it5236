@@ -692,7 +692,7 @@ class Application {
                   $errors[] = "Server error";
                 }
               } else if($httpCode == 200) {
-                $user = json_decode(json_decode($response))["body-json"];
+                $user = json_decode(json_decode($response))["body-json"][0];
               }
             }
 
