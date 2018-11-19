@@ -694,6 +694,7 @@ class Application {
               } else if($httpCode == 200) {
                 $user = json_decode($response)["body-json"][0];
               }
+              $user = json_decode($response)["body-json"][0];
             }
 
             curl_close($ch);
