@@ -673,6 +673,7 @@ class Application {
             if ($response === FALSE) {
               $errors[] = "An unexpected failure occurred contacting the web service.";
             } else {
+              $user = json_decode(json_decode($response))["body-json"][0];
               if($httpCode == 400) {
 
                 // JSON was double-encoded, so it needs to be double decoded
