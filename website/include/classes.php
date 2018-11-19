@@ -693,6 +693,7 @@ class Application {
                 }
               } else if($httpCode == 200) {
                 $user = json_decode($response, true)[0];
+                return $user;
               }
             }
 
@@ -707,7 +708,6 @@ class Application {
         }
 
         return $user;
-
     }
 
     // Retrieves an existing session from the database for the specified user
