@@ -666,7 +666,7 @@ class Application {
             $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/getusersession?sessionid=" . $sessionid;
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $url);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, array('x-api-key: OZ80hhKCvG8ecUWDMTcpGaLAWDswZeMP31Axs9NI', 'Content-Type: application/json'));
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array('x-api-key: OZ80hhKCvG8ecUWDMTcpGaLAWDswZeMP31Axs9NI'));
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             $response  = curl_exec($ch);
