@@ -220,9 +220,6 @@ class Application {
 
       protected function sendVerificationEmail($userid, $email, &$errors) {
 
-          // Connect to the database
-          $dbh = $this->getConnection();
-
           $this->auditlog("sendOTPEmail", "Sending code to $email");
 
           $validationid = rand(100000, 999999);
@@ -923,7 +920,6 @@ class Application {
 
         // Get the user ID from the session record
         $user = $this->getSessionUser($errors);
-        error_log($user['userid'], 0);
         if ($user == NULL) {
             // Redirect the user to the login page
             $this->auditlog("protect page", "no user");
