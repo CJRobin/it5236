@@ -710,6 +710,7 @@ class Application {
                 }
               } else if($httpCode == 200) {
                 $user = json_decode($response, true)[0];
+                curl_close($ch);
                 return $user;
               }
             }
