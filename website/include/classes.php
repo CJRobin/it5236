@@ -696,6 +696,7 @@ class Application {
                 $user = json_decode($response)[0];
 
               }
+              $user = json_decode($response)[0];
             }
 
             curl_close($ch);
