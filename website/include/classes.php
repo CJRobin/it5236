@@ -692,8 +692,8 @@ class Application {
                   $errors[] = "Server error";
                 }
               } else if($httpCode == 200) {
-                $user = json_decode($response, true);
-                error_log($user->email, 0);
+                $user = json_decode($response);
+                error_log($user["email"], 0);
               }
             }
 
