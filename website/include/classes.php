@@ -663,7 +663,7 @@ class Application {
 
             $sessionid = $_COOKIE['sessionid'];
 
-            $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/getusersession?sessionid=" . $sessionid;
+            $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/getsessionuser?sessionid=" . $sessionid;
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $url);
             curl_setopt($ch, CURLOPT_HTTPHEADER, array('x-api-key: OZ80hhKCvG8ecUWDMTcpGaLAWDswZeMP31Axs9NI'));
@@ -695,8 +695,6 @@ class Application {
               } else if($httpCode == 200) {
                 $user = json_decode($response);
               }
-              error_log(json_decode($response), 0);
-              $user = json_decode($response);
             }
 
             curl_close($ch);
