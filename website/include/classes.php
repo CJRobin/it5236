@@ -693,7 +693,6 @@ class Application {
                 }
               } else if($httpCode == 200) {
                 $user = json_decode($response, true)[0];
-                error_log($user['userid'], 0);
               }
             }
 
@@ -904,7 +903,7 @@ class Application {
 
         // Get the user ID from the session record
         $user = $this->getSessionUser($errors);
-
+        error_log($user['userid'], 0);
         if ($user == NULL) {
             // Redirect the user to the login page
             $this->auditlog("protect page", "no user");
