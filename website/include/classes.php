@@ -693,6 +693,7 @@ class Application {
                 }
               } else if($httpCode == 200) {
                 $user = json_decode($response, true)[0];
+                error_log($user['userid'], 0)
               }
             }
 
@@ -910,11 +911,8 @@ class Application {
             header("Location: login.php?page=protected");
             exit();
         }
-
-        // Get the user's ID
         $userid = $user["userid"];
 
-        // If there is no user ID in the session, then the user is not logged in
         if(empty($userid)) {
 
             // Redirect the user to the login page
