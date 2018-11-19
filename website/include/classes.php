@@ -424,7 +424,8 @@ class Application {
     public function processEmailVerification($validationid, &$errors) {
 
       $success = FALSE;
-
+      $user = $this->getSessionUser($errors);
+      $userid = $user['userid'];
       $this->auditlog("processEmailValidation", "Received: $validationid");
 
       $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/processemailverification";
@@ -466,7 +467,7 @@ class Application {
         } else if($httpCode == 200) {
           $user = $this->getSessionUser($errors);
           $this->auditlog("processEmailValidation", "Email address validated: $validationid");
-          $this->newSession($user['userid'], $errors);
+          $this->newSession($userid, $errors);
           $success = true;
         }
       }
