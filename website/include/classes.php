@@ -1,6 +1,4 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 'On');
 if (file_exists(getcwd() . "/include/credentials.php")) {
     require('credentials.php');
 } else {
@@ -229,22 +227,45 @@ class Application {
 
           $validationid = rand(100000, 999999);
 
-          // Construct a SQL statement to perform the insert operation
-          $sql = "INSERT INTO emailvalidation (emailvalidationid, userid, email, emailsent) " .
-              "VALUES (:emailvalidationid, :userid, :email, NOW())";
-
-          // Run the SQL select and capture the result code
-          $stmt = $dbh->prepare($sql);
-          $stmt->bindParam(":emailvalidationid", $validationid);
-          $stmt->bindParam(":userid", $userid);
-          $stmt->bindParam(":email", $email);
-          $result = $stmt->execute();
-          if ($result === FALSE) {
-              $errors[] = "An unexpected error occurred sending the otp email";
-              $this->debug($stmt->errorInfo());
-              $this->auditlog("login error", $stmt->errorInfo());
+          $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/sendverificationemail";
+          $data = array(
+            'emailvalidationid'=>$validationid,
+            'userid'=>$userid,
+            'email'=>$email
+          );
+          $data_json = json_encode($data);
+          $ch = curl_init();
+          curl_setopt($ch, CURLOPT_URL, $url);
+          curl_setopt($ch, CURLOPT_HTTPHEADER, array('x-api-key: OZ80hhKCvG8ecUWDMTcpGaLAWDswZeMP31Axs9NI', 'Content-Type: application/json','Content-Length: ' . strlen($data_json)));
+          curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+          curl_setopt($ch, CURLOPT_POSTFIELDS, $data_json);
+          curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+          $response  = curl_exec($ch);
+          $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+          if ($response === FALSE) {
+            $errors[] = "An unexpected error occurred sending the otp email";
+            $this->debug($stmt->errorInfo());
+            $this->auditlog("login error", $stmt->errorInfo());
           } else {
+            if($httpCode == 400) {
 
+              // JSON was double-encoded, so it needs to be double decoded
+              $errorsList = json_decode(json_decode($response))->errors;
+              foreach ($errorsList as $err) {
+                $errors[] = $err;
+              }
+              if (sizeof($errors) == 0) {
+                $errors[] = "Bad input";
+              }
+            } else if($httpCode == 500) {
+              $errorsList = json_decode(json_decode($response))->errors;
+              foreach ($errorsList as $err) {
+                $errors[] = $err;
+              }
+              if (sizeof($errors) == 0) {
+                $errors[] = "Server error";
+              }
+            } else if($httpCode == 200) {
               $this->auditlog("sendOTPEmail", "Sending message to $email");
 
               // Send reset email
@@ -261,11 +282,10 @@ class Application {
               mail($to, $subject, $message, $headers);
 
               $this->auditlog("sendOTPEmail", "Message sent to $email");
-
+            }
           }
 
-          // Close the connection
-          $dbh = NULL;
+          curl_close($ch);
 
       }
       // Send an email to validate the address
