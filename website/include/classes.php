@@ -596,7 +596,7 @@ class Application {
             }
           } else if($httpCode == 200) {
             $rows = json_decode($response. true)[0];
-            $regs = json_decode($response. true)[0]['registrationcode'];
+            $regs = array(json_decode($response. true)[0]['registrationcode']);
             $this->auditlog("getUserRegistrations", "success");
             return $regs;
           }
