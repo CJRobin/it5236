@@ -557,11 +557,9 @@ class Application {
         $regs = array();
 
         // Connect to the database
-        $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/newsession";
+        $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/getuserregistrations";
         $data = array(
-          'sessionid'=>$sessionid,
-          'userid'=>$userid,
-          'registrationcode'=>$registrationcode
+          'userid'=>$userid
         );
         $data_json = json_encode($data);
         $ch = curl_init();
