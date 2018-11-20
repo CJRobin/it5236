@@ -598,6 +598,7 @@ class Application {
             $rows = json_decode($response, true)[0];
             $regs = array_column($rows, 'registrationcode');
             $this->auditlog("getUserRegistrations", "success");
+            return $regs;
           }
         }
 
