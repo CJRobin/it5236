@@ -496,38 +496,56 @@ class Application {
             // Create a new session ID
             $sessionid = bin2hex(random_bytes(25));
 
-            // Connect to the database
-            $dbh = $this->getConnection();
-
-            // Construct a SQL statement to perform the insert operation
-            $sql = "INSERT INTO usersessions (usersessionid, userid, expires, registrationcode) " .
-                "VALUES (:sessionid, :userid, DATE_ADD(NOW(), INTERVAL 7 DAY), :registrationcode)";
-
-            // Run the SQL select and capture the result code
-            $stmt = $dbh->prepare($sql);
-            $stmt->bindParam(":sessionid", $sessionid);
-            $stmt->bindParam(":userid", $userid);
-            $stmt->bindParam(":registrationcode", $registrationcode);
-            $result = $stmt->execute();
-
-            // If the query did not run successfully, add an error message to the list
-            if ($result === FALSE) {
-
-                $errors[] = "An unexpected error occurred";
-                $this->debug($stmt->errorInfo());
-                $this->auditlog("new session error", $stmt->errorInfo());
-                return NULL;
-
+            $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/newsession";
+            $data = array(
+              'sessionid'=>$sessionid,
+              'userid'=>$userid,
+              'registrationcode'=>$registrationcode
+            );
+            $data_json = json_encode($data);
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array('x-api-key: OZ80hhKCvG8ecUWDMTcpGaLAWDswZeMP31Axs9NI', 'Content-Type: application/json','Content-Length: ' . strlen($data_json)));
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $data_json);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            $response  = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            if ($response === FALSE) {
+              $errors[] = "An unexpected error occurred";
+              $this->debug($stmt->errorInfo());
+              $this->auditlog("new session error", $stmt->errorInfo());
+              return NULL;
             } else {
+              if($httpCode == 400) {
 
+                // JSON was double-encoded, so it needs to be double decoded
+                $errorsList = json_decode(json_decode($response))->errors;
+                foreach ($errorsList as $err) {
+                  $errors[] = $err;
+                }
+                if (sizeof($errors) == 0) {
+                  $errors[] = "Bad input";
+                }
+              } else if($httpCode == 500) {
+                $errorsList = json_decode(json_decode($response))->errors;
+                foreach ($errorsList as $err) {
+                  $errors[] = $err;
+                }
+                if (sizeof($errors) == 0) {
+                  $errors[] = "Server error";
+                }
+              } else if($httpCode == 200) {
                 // Store the session ID as a cookie in the browser
                 setcookie('sessionid', $sessionid, time()+60*60*24*30);
                 $this->auditlog("session", "new session id: $sessionid for user = $userid");
 
                 // Return the session ID
                 return $sessionid;
-
+              }
             }
+
+            curl_close($ch);
 
         }
 

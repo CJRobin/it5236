@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
 
 		$success = $app->processEmailVerification($_GET['id'], $errors);
 		if ($success) {
-		    header("Location: thing.php");
+		    header("Location: list.php");
 		}
 
 	}
