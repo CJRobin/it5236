@@ -557,37 +557,54 @@ class Application {
         $regs = array();
 
         // Connect to the database
-        $dbh = $this->getConnection();
-
-        // Construct a SQL statement to perform the select operation
-        $sql = "SELECT registrationcode FROM userregistrations WHERE userid = :userid";
-
-        // Run the SQL select and capture the result code
-        $stmt = $dbh->prepare($sql);
-        $stmt->bindParam(':userid', $userid);
-        $result = $stmt->execute();
-
-        // If the query did not run successfully, add an error message to the list
-        if ($result === FALSE) {
-
-            $errors[] = "An unexpected error occurred getting the regs list.";
-            $this->debug($stmt->errorInfo());
-            $this->auditlog("getUserRegistrations error", $stmt->errorInfo());
-
-            // If the query ran successfully, then get the list of users
+        $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/newsession";
+        $data = array(
+          'sessionid'=>$sessionid,
+          'userid'=>$userid,
+          'registrationcode'=>$registrationcode
+        );
+        $data_json = json_encode($data);
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('x-api-key: OZ80hhKCvG8ecUWDMTcpGaLAWDswZeMP31Axs9NI', 'Content-Type: application/json','Content-Length: ' . strlen($data_json)));
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $data_json);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $response  = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        if ($response === FALSE) {
+          $errors[] = "An unexpected error occurred getting the regs list.";
+          $this->debug($stmt->errorInfo());
+          $this->auditlog("getUserRegistrations error", $stmt->errorInfo());
+          return NULL;
         } else {
+          if($httpCode == 400) {
 
-            // Get all the rows
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            // JSON was double-encoded, so it needs to be double decoded
+            $errorsList = json_decode(json_decode($response))->errors;
+            foreach ($errorsList as $err) {
+              $errors[] = $err;
+            }
+            if (sizeof($errors) == 0) {
+              $errors[] = "Bad input";
+            }
+          } else if($httpCode == 500) {
+            $errorsList = json_decode(json_decode($response))->errors;
+            foreach ($errorsList as $err) {
+              $errors[] = $err;
+            }
+            if (sizeof($errors) == 0) {
+              $errors[] = "Server error";
+            }
+          } else if($httpCode == 200) {
+            $rows = json_decode($response, true)[0];
             $regs = array_column($rows, 'registrationcode');
             $this->auditlog("getUserRegistrations", "success");
-
+          }
         }
 
-        // Close the connection
-        $dbh = NULL;
+        curl_close($ch);
 
-        // Return the list of users
         return $regs;
     }
 
