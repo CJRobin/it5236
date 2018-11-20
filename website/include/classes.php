@@ -469,6 +469,7 @@ class Application {
           $this->auditlog("processEmailValidation", "Email address validated: $validationid");
           $this->newSession($userid, $errors);
           $success = true;
+          return $success;
         }
       }
 
