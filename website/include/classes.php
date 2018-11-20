@@ -595,8 +595,8 @@ class Application {
               $errors[] = "Server error";
             }
           } else if($httpCode == 200) {
-            $rows = json_decode($response)[0];
-            $regs = array_column($rows, 'registrationcode');
+            $rows = json_decode($response. true)[0];
+            $regs = json_decode($response. true)[0]['registrationcode'];
             $this->auditlog("getUserRegistrations", "success");
             return $regs;
           }
