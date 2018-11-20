@@ -464,7 +464,7 @@ class Application {
           }
         } else if($httpCode == 200) {
           $this->auditlog("processEmailValidation", "Email address validated: $validationid");
-          $this->newSession(json_decode($response)[0]['userid'], $errors);
+          $this->newSession(json_decode($response, true)[0]['userid'], $errors);
           $success = true;
         }
       }
