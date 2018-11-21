@@ -1175,7 +1175,7 @@ class Application {
 
         } else {
 
-          $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/getthing?thingid=" . $thingid;
+          $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/getcomments?thingid=" . $thingid;
           $ch = curl_init();
           curl_setopt($ch, CURLOPT_URL, $url);
           curl_setopt($ch, CURLOPT_HTTPHEADER, array('x-api-key: OZ80hhKCvG8ecUWDMTcpGaLAWDswZeMP31Axs9NI'));
