@@ -903,7 +903,7 @@ class Application {
             } else if($httpCode == 200) {
               $user = json_decode($response, true);
 
-              if (!$user[0]) {
+              if (!array_key_exists(0, $user)) {
                 $errors[] = "Bad username/password combination";
                 $this->auditlog("login", "bad username: $username");
               } else {
