@@ -901,7 +901,7 @@ class Application {
                 $errors[] = "Server error";
               }
             } else if($httpCode == 200) {
-              $user = json_decode($response, true);
+              $user = json_decode($response);
 
               if (!isset($user[0])) {
                 $errors[] = "Bad username/password combination";
