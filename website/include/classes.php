@@ -1055,7 +1055,7 @@ class Application {
         $user = $this->getSessionUser($errors);
         $registrationcode = $user["registrationcode"];
 
-        $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/getthing?registrationcode=" . $registrationcode;
+        $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/getthings?registrationcode=" . $registrationcode;
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_HTTPHEADER, array('x-api-key: OZ80hhKCvG8ecUWDMTcpGaLAWDswZeMP31Axs9NI'));
@@ -1111,42 +1111,43 @@ class Application {
         if (sizeof($errors) == 0){
 
             // Connect to the database
-            $dbh = $this->getConnection();
-
-            // Construct a SQL statement to perform the select operation
-            $sql = "SELECT things.thingid, things.thingname, convert_tz(things.thingcreated,@@session.time_zone,'America/New_York') as thingcreated, things.thinguserid, things.thingattachmentid, things.thingregistrationcode, username, filename " .
-                "FROM things LEFT JOIN users ON things.thinguserid = users.userid " .
-                "LEFT JOIN attachments ON things.thingattachmentid = attachments.attachmentid " .
-                "WHERE thingid = :thingid";
-
-            // Run the SQL select and capture the result code
-            $stmt = $dbh->prepare($sql);
-            $stmt->bindParam(":thingid", $thingid);
-            $result = $stmt->execute();
-
-            // If the query did not run successfully, add an error message to the list
-            if ($result === FALSE) {
-
-                $errors[] = "An unexpected error occurred.";
-                $this->debug($stmt->errorInfo());
-                $this->auditlog("getthing error", $stmt->errorInfo());
-
-                // If no row returned then the thing does not exist in the database.
-            } else if ($stmt->rowCount() == 0) {
-
-                $errors[] = "Thing not found";
-                $this->auditlog("getThing", "bad thing id: $thingid");
-
-                // If the query ran successfully and row was returned, then get the details of the thing
+            $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/getthing?thingid=" . $thingid;
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array('x-api-key: OZ80hhKCvG8ecUWDMTcpGaLAWDswZeMP31Axs9NI'));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            $response  = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            if ($response === FALSE) {
+              $errors[] = "An unexpected error occurred.";
+              $this->debug($stmt->errorInfo());
+              $this->auditlog("getthing error", $stmt->errorInfo());
             } else {
+              if($httpCode == 400) {
 
-                // Get the thing
-                $thing = $stmt->fetch();
-
+                // JSON was double-encoded, so it needs to be double decoded
+                $errorsList = json_decode(json_decode($response))->errors;
+                foreach ($errorsList as $err) {
+                  $errors[] = $err;
+                }
+                if (sizeof($errors) == 0) {
+                  $errors[] = "Bad input";
+                }
+              } else if($httpCode == 500) {
+                $errorsList = json_decode(json_decode($response))->errors;
+                foreach ($errorsList as $err) {
+                  $errors[] = $err;
+                }
+                if (sizeof($errors) == 0) {
+                  $errors[] = "Server error";
+                }
+              } else if($httpCode == 200) {
+                $thing = json_decode($response, true);
+              }
             }
 
-            // Close the connection
-            $dbh = NULL;
+            curl_close($ch);
+
 
         } else {
             $this->auditlog("getThing validation error", $errors);
