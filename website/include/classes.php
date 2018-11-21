@@ -795,35 +795,54 @@ class Application {
             return FALSE;
         }
 
-        // Connect to the database
-        $dbh = $this->getConnection();
+        $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/isadmin";
+        $data = array(
+          'userid'=>$userid
+        );
+        $data_json = json_encode($data);
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('x-api-key: OZ80hhKCvG8ecUWDMTcpGaLAWDswZeMP31Axs9NI', 'Content-Type: application/json','Content-Length: ' . strlen($data_json)));
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $data_json);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $response  = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        if ($response === FALSE) {
+          $errors[] = "An unexpected error occurred";
+          $this->debug($stmt->errorInfo());
+          $this->auditlog("isadmin error", $stmt->errorInfo());
 
-        // Construct a SQL statement to perform the insert operation
-        $sql = "SELECT isadmin FROM users WHERE userid = :userid";
-
-        // Run the SQL select and capture the result code
-        $stmt = $dbh->prepare($sql);
-        $stmt->bindParam(":userid", $userid);
-        $result = $stmt->execute();
-
-        // If the query did not run successfully, add an error message to the list
-        if ($result === FALSE) {
-
-            $errors[] = "An unexpected error occurred";
-            $this->debug($stmt->errorInfo());
-            $this->auditlog("isadmin error", $stmt->errorInfo());
-
-            return FALSE;
-
+          return FALSE;
         } else {
+          if($httpCode == 400) {
 
-            $row = $stmt->fetch();
-            $isadmin = $row['isadmin'];
+            // JSON was double-encoded, so it needs to be double decoded
+            $errorsList = json_decode(json_decode($response))->errors;
+            foreach ($errorsList as $err) {
+              $errors[] = $err;
+            }
+            if (sizeof($errors) == 0) {
+              $errors[] = "Bad input";
+            }
+          } else if($httpCode == 500) {
+            $errorsList = json_decode(json_decode($response))->errors;
+            foreach ($errorsList as $err) {
+              $errors[] = $err;
+            }
+            if (sizeof($errors) == 0) {
+              $errors[] = "Server error";
+            }
+          } else if($httpCode == 200) {
+            $isadmin = json_decode($response, true)[0]['isadmin'];
 
             // Return the isAdmin flag
             return $isadmin == 1;
-
+          }
         }
+
+        curl_close($ch);
+
     }
 
     // Logs in an existing user and will return the $errors array listing any errors encountered
