@@ -864,7 +864,7 @@ class Application {
 
           $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/login";
           $data = array(
-            'userid'=>$userid
+            'username'=>$username
           );
           $data_json = json_encode($data);
           $ch = curl_init();
