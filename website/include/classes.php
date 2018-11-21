@@ -1051,38 +1051,46 @@ class Application {
         // Assume an empty list of things
         $things = array();
 
-        // Connect to the database
-        $dbh = $this->getConnection();
-
         // Get the user id from the session
         $user = $this->getSessionUser($errors);
         $registrationcode = $user["registrationcode"];
 
-        // Construct a SQL statement to perform the select operation
-        $sql = "SELECT thingid, thingname, convert_tz(things.thingcreated,@@session.time_zone,'America/New_York') as thingcreated, thinguserid, thingattachmentid, thingregistrationcode FROM things LEFT JOIN users ON things.thinguserid = users.userid WHERE thingregistrationcode = :registrationcode ORDER BY things.thingcreated ASC";
-
-        // Run the SQL select and capture the result code
-        $stmt = $dbh->prepare($sql);
-        $stmt->bindParam(":registrationcode", $registrationcode);
-        $result = $stmt->execute();
-
-        // If the query did not run successfully, add an error message to the list
-        if ($result === FALSE) {
-
-            $errors[] = "An unexpected error occurred.";
-            $this->debug($stmt->errorInfo());
-            $this->auditlog("getthings error", $stmt->errorInfo());
-
-            // If the query ran successfully, then get the list of things
+        $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/getthing?registrationcode=" . $registrationcode;
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('x-api-key: OZ80hhKCvG8ecUWDMTcpGaLAWDswZeMP31Axs9NI'));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $response  = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        if ($response === FALSE) {
+          $errors[] = "An unexpected error occurred.";
+          $this->debug($stmt->errorInfo());
+          $this->auditlog("getthings error", $stmt->errorInfo());
         } else {
+          if($httpCode == 400) {
 
-            // Get all the rows
-            $things = $stmt->fetchAll();
-
+            // JSON was double-encoded, so it needs to be double decoded
+            $errorsList = json_decode(json_decode($response))->errors;
+            foreach ($errorsList as $err) {
+              $errors[] = $err;
+            }
+            if (sizeof($errors) == 0) {
+              $errors[] = "Bad input";
+            }
+          } else if($httpCode == 500) {
+            $errorsList = json_decode(json_decode($response))->errors;
+            foreach ($errorsList as $err) {
+              $errors[] = $err;
+            }
+            if (sizeof($errors) == 0) {
+              $errors[] = "Server error";
+            }
+          } else if($httpCode == 200) {
+            $things = json_decode($response, true);
+          }
         }
 
-        // Close the connection
-        $dbh = NULL;
+        curl_close($ch);
 
         // Return the list of things
         return $things;
