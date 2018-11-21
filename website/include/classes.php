@@ -901,10 +901,10 @@ class Application {
                 $errors[] = "Server error";
               }
             } else if($httpCode == 200) {
-              $user = json_decode($response);
+              $user = json_decode($response, true);
 
               if (!isset($user[0])) {
-                $errors[] = "Bad username/password combination";
+                $errors[] = "Bad username/password combination!";
                 $this->auditlog("login", "bad username: $username");
               } else {
                 $row = json_decode($response, true)[0];
