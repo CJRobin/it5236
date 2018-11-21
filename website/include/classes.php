@@ -1175,38 +1175,42 @@ class Application {
 
         } else {
 
-            // Connect to the database
-            $dbh = $this->getConnection();
+          $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/getthing?thingid=" . $thingid;
+          $ch = curl_init();
+          curl_setopt($ch, CURLOPT_URL, $url);
+          curl_setopt($ch, CURLOPT_HTTPHEADER, array('x-api-key: OZ80hhKCvG8ecUWDMTcpGaLAWDswZeMP31Axs9NI'));
+          curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+          $response  = curl_exec($ch);
+          $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+          if ($response === FALSE) {
+            $errors[] = "An unexpected error occurred loading the comments.";
+            $this->debug($stmt->errorInfo());
+            $this->auditlog("getcomments error", $stmt->errorInfo());
+          } else {
+            if($httpCode == 400) {
 
-            // Construct a SQL statement to perform the select operation
-            $sql = "SELECT commentid, commenttext, convert_tz(comments.commentposted,@@session.time_zone,'America/New_York') as commentposted, username, attachmentid, filename " .
-                "FROM comments LEFT JOIN users ON comments.commentuserid = users.userid " .
-                "LEFT JOIN attachments ON comments.commentattachmentid = attachments.attachmentid " .
-                "WHERE commentthingid = :thingid ORDER BY commentposted ASC";
-
-            // Run the SQL select and capture the result code
-            $stmt = $dbh->prepare($sql);
-            $stmt->bindParam(":thingid", $thingid);
-            $result = $stmt->execute();
-
-            // If the query did not run successfully, add an error message to the list
-            if ($result === FALSE) {
-
-                $errors[] = "An unexpected error occurred loading the comments.";
-                $this->debug($stmt->errorInfo());
-                $this->auditlog("getcomments error", $stmt->errorInfo());
-
-                // If the query ran successfully, then get the list of comments
-            } else {
-
-                // Get all the rows
-                $comments = $stmt->fetchAll();
-
+              // JSON was double-encoded, so it needs to be double decoded
+              $errorsList = json_decode(json_decode($response))->errors;
+              foreach ($errorsList as $err) {
+                $errors[] = $err;
+              }
+              if (sizeof($errors) == 0) {
+                $errors[] = "Bad input";
+              }
+            } else if($httpCode == 500) {
+              $errorsList = json_decode(json_decode($response))->errors;
+              foreach ($errorsList as $err) {
+                $errors[] = $err;
+              }
+              if (sizeof($errors) == 0) {
+                $errors[] = "Server error";
+              }
+            } else if($httpCode == 200) {
+              $comments = json_decode($response, true);
             }
+          }
 
-            // Close the connection
-            $dbh = NULL;
-
+          curl_close($ch);
         }
 
         // Return the list of comments
