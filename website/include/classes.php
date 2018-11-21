@@ -1142,7 +1142,7 @@ class Application {
                   $errors[] = "Server error";
                 }
               } else if($httpCode == 200) {
-                $thing = json_decode($response, true);
+                $thing = json_decode($response, true)[0];
               }
             }
 
