@@ -1509,16 +1509,10 @@ class Application {
         // Assume an empty list of topics
         $users = array();
 
-        // Connect to the database
-        $dbh = $this->getConnection();
-
-        // Construct a SQL statement to perform the select operation
-        $sql = "SELECT userid, username, email, isadmin FROM users ORDER BY username";
-
         // Run the SQL select and capture the result code
         $stmt = $dbh->prepare($sql);
         $result = $stmt->execute();
-        $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/getcomments?getusers";
+        $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/getusers";
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_HTTPHEADER, array('x-api-key: OZ80hhKCvG8ecUWDMTcpGaLAWDswZeMP31Axs9NI'));
