@@ -1494,7 +1494,7 @@ class Application {
         } else {
             $this->auditlog("addcomment validation error", $errors);
         }
-
+        }
         // Return TRUE if there are no errors, otherwise return FALSE
         if (sizeof($errors) == 0){
             return TRUE;
