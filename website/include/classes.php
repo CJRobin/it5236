@@ -1293,6 +1293,7 @@ class Application {
           					if (sizeof($errors) == 0) {
           						$errors[] = "Bad input";
           					}
+                    curl_close($ch);
           				} else if($httpCode == 500) {
           					$errorsList = json_decode(json_decode($response))->errors;
           					foreach ($errorsList as $err) {
@@ -1301,6 +1302,7 @@ class Application {
           					if (sizeof($errors) == 0) {
           						$errors[] = "Server error";
           					}
+                    curl_close($ch);
           				} else if($httpCode == 200) {
                     move_uploaded_file($attachment['tmp_name'], getcwd() . '/attachments/' . $attachmentid . '-' . $attachment['name']);
                     $attachmentname = $attachment["name"];
@@ -1349,36 +1351,56 @@ class Application {
                 // Create a new ID
                 $thingid = bin2hex(random_bytes(16));
 
-                // Add a record to the things table
-                // Construct a SQL statement to perform the insert operation
-                $sql = "INSERT INTO things (thingid, thingname, thingcreated, thinguserid, thingattachmentid, thingregistrationcode) VALUES (:thingid, :name, now(), :userid, :attachmentid, :registrationcode)";
-
-                // Run the SQL insert and capture the result code
-                $stmt = $dbh->prepare($sql);
-                $stmt->bindParam(":thingid", $thingid);
-                $stmt->bindParam(":name", $name);
-                $stmt->bindParam(":userid", $userid);
-                $stmt->bindParam(":attachmentid", $attachmentid);
-                $stmt->bindParam(":registrationcode", $registrationcode);
-                $result = $stmt->execute();
-
-                // If the query did not run successfully, add an error message to the list
-                if ($result === FALSE) {
-
-                    $errors[] = "An unexpected error occurred adding the thing to the database.";
-                    $this->debug($stmt->errorInfo());
-                    $this->auditlog("addthing error", $stmt->errorInfo());
-
+                $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/addthing";
+                $data = array(
+                  'thingid'=>$thingid,
+                  'name'=>$name,
+                  'userid'=>$userid,
+                  'attachmentid'=>$attachmentid,
+                  'registrationcode'=>$registrationcode
+                );
+                $data_json = json_encode($data);
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, array('x-api-key: OZ80hhKCvG8ecUWDMTcpGaLAWDswZeMP31Axs9NI', 'Content-Type: application/json','Content-Length: ' . strlen($data_json)));
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $data_json);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                $response  = curl_exec($ch);
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                if ($response === FALSE) {
+                  $errors[] = "An unexpected error occurred adding the thing to the database.";
+                  $this->debug($stmt->errorInfo());
+                  $this->auditlog("addthing error", $stmt->errorInfo());
                 } else {
+                  if($httpCode == 400) {
 
+                    // JSON was double-encoded, so it needs to be double decoded
+                    $errorsList = json_decode(json_decode($response))->errors;
+                    foreach ($errorsList as $err) {
+                      $errors[] = $err;
+                    }
+                    if (sizeof($errors) == 0) {
+                      $errors[] = "Bad input";
+                    }
+                    curl_close($ch);
+                  } else if($httpCode == 500) {
+                    $errorsList = json_decode(json_decode($response))->errors;
+                    foreach ($errorsList as $err) {
+                      $errors[] = $err;
+                    }
+                    if (sizeof($errors) == 0) {
+                      $errors[] = "Server error";
+                    }
+                    curl_close($ch);
+                  } else if($httpCode == 200) {
                     $this->auditlog("addthing", "success: $name, id = $thingid");
+                    curl_close($ch);
 
+                  }
                 }
 
             }
-
-            // Close the connection
-            $dbh = NULL;
 
         } else {
             $this->auditlog("addthing validation error", $errors);
