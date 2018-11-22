@@ -1267,7 +1267,7 @@ class Application {
                 $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/saveattachment";
           			$data = array(
           				'attachmentid'=>$attachmentid,
-                  'filename'=>$attachment['name']
+                  'filename'=>$filename
           			);
           			$data_json = json_encode($data);
           			$ch = curl_init();
@@ -1305,10 +1305,12 @@ class Application {
                     move_uploaded_file($attachment['tmp_name'], getcwd() . '/attachments/' . $attachmentid . '-' . $attachment['name']);
                     $attachmentname = $attachment["name"];
                     $this->auditlog("saveAttachment", "success: $attachmentname");
+                    curl_close($ch);
+                    return $attachmentid;
           				}
           			}
 
-          			curl_close($ch);
+
 
             }
 
