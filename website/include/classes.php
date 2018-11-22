@@ -1219,7 +1219,7 @@ class Application {
     }
 
     // Handles the saving of uploaded attachments and the creation of a corresponding record in the attachments table.
-    public function saveAttachment($dbh, $attachment, &$errors) {
+    public function saveAttachment($attachment, &$errors) {
 
         $attachmentid = NULL;
 
@@ -1341,9 +1341,7 @@ class Application {
         // Only try to insert the data into the database if there are no validation errors
         if (sizeof($errors) == 0) {
 
-            // Connect to the database
-            $dbh = $this->getConnection();
-            $attachmentid = $this->saveAttachment($dbh, $attachment, $errors);
+            $attachmentid = $this->saveAttachment($attachment, $errors);
 
             // Only try to insert the data into the database if the attachment successfully saved
             if (sizeof($errors) == 0) {
@@ -1435,10 +1433,8 @@ class Application {
         // Only try to insert the data into the database if there are no validation errors
         if (sizeof($errors) == 0) {
 
-            // Connect to the database
-            $dbh = $this->getConnection();
 
-            $attachmentid = $this->saveAttachment($dbh, $attachment, $errors);
+            $attachmentid = $this->saveAttachment($attachment, $errors);
 
             // Only try to insert the data into the database if the attachment successfully saved
             if (sizeof($errors) == 0) {
@@ -1446,33 +1442,54 @@ class Application {
                 // Create a new ID
                 $commentid = bin2hex(random_bytes(16));
 
-                // Add a record to the Comments table
-                // Construct a SQL statement to perform the insert operation
-                $sql = "INSERT INTO comments (commentid, commenttext, commentposted, commentuserid, commentthingid, commentattachmentid) " .
-                "VALUES (:commentid, :text, now(), :userid, :thingid, :attachmentid)";
-
-                // Run the SQL insert and capture the result code
-                $stmt = $dbh->prepare($sql);
-                $stmt->bindParam(":commentid", $commentid);
-                $stmt->bindParam(":text", $text);
-                $stmt->bindParam(":userid", $userid);
-                $stmt->bindParam(":thingid", $thingid);
-                $stmt->bindParam(":attachmentid", $attachmentid);
-                $result = $stmt->execute();
-
-                // If the query did not run successfully, add an error message to the list
-                if ($result === FALSE) {
-                    $errors[] = "An unexpected error occurred saving the comment to the database.";
-                    $this->debug($stmt->errorInfo());
-                    $this->auditlog("addcomment error", $stmt->errorInfo());
+                $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/addcomment";
+                $data = array(
+                  'commentid'=>$commentid,
+                  'commenttext'=>$text,
+                  'commentuserid'=>$userid,
+                  'commentthingid'=>$thingid,
+                  'commentattachmentid'=>$attachmentid
+                );
+                $data_json = json_encode($data);
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, array('x-api-key: OZ80hhKCvG8ecUWDMTcpGaLAWDswZeMP31Axs9NI', 'Content-Type: application/json','Content-Length: ' . strlen($data_json)));
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $data_json);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                $response  = curl_exec($ch);
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                if ($response === FALSE) {
+                  $errors[] = "An unexpected error occurred saving the comment to the database.";
+                  $this->debug($stmt->errorInfo());
+                  $this->auditlog("addcomment error", $stmt->errorInfo());
                 } else {
+                  if($httpCode == 400) {
+
+                    // JSON was double-encoded, so it needs to be double decoded
+                    $errorsList = json_decode(json_decode($response))->errors;
+                    foreach ($errorsList as $err) {
+                      $errors[] = $err;
+                    }
+                    if (sizeof($errors) == 0) {
+                      $errors[] = "Bad input";
+                    }
+                    curl_close($ch);
+                  } else if($httpCode == 500) {
+                    $errorsList = json_decode(json_decode($response))->errors;
+                    foreach ($errorsList as $err) {
+                      $errors[] = $err;
+                    }
+                    if (sizeof($errors) == 0) {
+                      $errors[] = "Server error";
+                    }
+                    curl_close($ch);
+                  } else if($httpCode == 200) {
                     $this->auditlog("addcomment", "success: $commentid");
+                    curl_close($ch);
+
+                  }
                 }
-
-            }
-
-            // Close the connection
-            $dbh = NULL;
 
         } else {
             $this->auditlog("addcomment validation error", $errors);
