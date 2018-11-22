@@ -1509,9 +1509,6 @@ class Application {
         // Assume an empty list of topics
         $users = array();
 
-        // Run the SQL select and capture the result code
-        $stmt = $dbh->prepare($sql);
-        $result = $stmt->execute();
         $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/getusers";
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -1590,40 +1587,45 @@ class Application {
                 // Only try to insert the data into the database if there are no validation errors
                 if (sizeof($errors) == 0) {
 
-                    // Connect to the database
-                    $dbh = $this->getConnection();
+                  $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/getuser?userid=" . $userid;
+                  $ch = curl_init();
+                  curl_setopt($ch, CURLOPT_URL, $url);
+                  curl_setopt($ch, CURLOPT_HTTPHEADER, array('x-api-key: OZ80hhKCvG8ecUWDMTcpGaLAWDswZeMP31Axs9NI'));
+                  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                  $response  = curl_exec($ch);
+                  $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                  if ($response === FALSE) {
+                    $errors[] = "An unexpected error occurred retrieving the specified user.";
+                    $this->debug($stmt->errorInfo());
+                    $this->auditlog("getuser error", $stmt->errorInfo());
+                  } else {
+                    if($httpCode == 400) {
 
-                    // Construct a SQL statement to perform the select operation
-                    $sql = "SELECT userid, username, email, isadmin FROM users WHERE userid = :userid";
-
-                    // Run the SQL select and capture the result code
-                    $stmt = $dbh->prepare($sql);
-                    $stmt->bindParam(":userid", $userid);
-                    $result = $stmt->execute();
-
-                    // If the query did not run successfully, add an error message to the list
-                    if ($result === FALSE) {
-
-                        $errors[] = "An unexpected error occurred retrieving the specified user.";
-                        $this->debug($stmt->errorInfo());
-                        $this->auditlog("getuser error", $stmt->errorInfo());
-
-                        // If the query did not return any rows, add an error message for invalid user id
-                    } else if ($stmt->rowCount() == 0) {
-
-                        $errors[] = "Bad userid";
-                        $this->auditlog("getuser", "bad userid: $userid");
-
-                        // If the query ran successfully and we got back a row, then the request succeeded
-                    } else {
-
-                        // Get the row from the result
-                        $user = $stmt->fetch();
-
+                      // JSON was double-encoded, so it needs to be double decoded
+                      $errorsList = json_decode(json_decode($response))->errors;
+                      foreach ($errorsList as $err) {
+                        $errors[] = $err;
+                      }
+                      if (sizeof($errors) == 0) {
+                        $errors[] = "Bad input";
+                      }
+                      curl_close($ch);
+                    } else if($httpCode == 500) {
+                      $errorsList = json_decode(json_decode($response))->errors;
+                      foreach ($errorsList as $err) {
+                        $errors[] = $err;
+                      }
+                      if (sizeof($errors) == 0) {
+                        $errors[] = "Server error";
+                      }
+                      curl_close($ch);
+                    } else if($httpCode == 200) {
+                      $user = json_decode($response, true)[0];
+                      $this->auditlog("getusers", "success");
+                      curl_close($ch);
+                      return $user;
                     }
-
-                    // Close the connection
-                    $dbh = NULL;
+                  }
 
                 } else {
                     $this->auditlog("getuser validation error", $errors);
