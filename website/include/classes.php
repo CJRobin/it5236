@@ -1354,10 +1354,10 @@ class Application {
                 $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/addthing";
                 $data = array(
                   'thingid'=>$thingid,
-                  'name'=>$name,
+                  'thingname'=>$name,
                   'userid'=>$userid,
                   'attachmentid'=>$attachmentid,
-                  'registrationcode'=>$registrationcode
+                  'thingregistrationcode'=>$registrationcode
                 );
                 $data_json = json_encode($data);
                 $ch = curl_init();
