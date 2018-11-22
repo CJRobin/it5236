@@ -1267,7 +1267,7 @@ class Application {
                 $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/saveattachment";
           			$data = array(
           				'attachmentid'=>$attachmentid,
-                  'filename'=>$filename
+                  'filename'=>$attachment['name']
           			);
           			$data_json = json_encode($data);
           			$ch = curl_init();
