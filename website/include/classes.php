@@ -1235,7 +1235,6 @@ class Application {
             // Get the uploaded filename
             $filename = $attachment['name'];
 
-            // Extract the uploaded file's extension
             $dot = strrpos($filename, ".");
 
             // Make sure the file has an extension and the last character of the name is not a "."
@@ -1265,30 +1264,51 @@ class Application {
                 // Create a new ID
                 $attachmentid = bin2hex(random_bytes(16));
 
-                // Construct a SQL statement to perform the insert operation
-                $sql = "INSERT INTO attachments (attachmentid, filename) VALUES (:attachmentid, :filename)";
+                $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/saveattachment";
+          			$data = array(
+          				'attachmentid'=>$attachmentid,
+                  'filename'=>$filename
+          			);
+          			$data_json = json_encode($data);
+          			$ch = curl_init();
+          			curl_setopt($ch, CURLOPT_URL, $url);
+          			curl_setopt($ch, CURLOPT_HTTPHEADER, array('x-api-key: OZ80hhKCvG8ecUWDMTcpGaLAWDswZeMP31Axs9NI', 'Content-Type: application/json','Content-Length: ' . strlen($data_json)));
+          			curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+          			curl_setopt($ch, CURLOPT_POSTFIELDS, $data_json);
+          			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+          			$response  = curl_exec($ch);
+          			$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+          			if ($response === FALSE) {
+                  $errors[] = "An unexpected error occurred storing the attachment.";
+                  $this->debug($stmt->errorInfo());
+                  $this->auditlog("saveAttachment error", $stmt->errorInfo());
+          			} else {
+          				if($httpCode == 400) {
 
-                // Run the SQL insert and capture the result code
-                $stmt = $dbh->prepare($sql);
-                $stmt->bindParam(":attachmentid", $attachmentid);
-                $stmt->bindParam(":filename", $filename);
-                $result = $stmt->execute();
-
-                // If the query did not run successfully, add an error message to the list
-                if ($result === FALSE) {
-
-                    $errors[] = "An unexpected error occurred storing the attachment.";
-                    $this->debug($stmt->errorInfo());
-                    $this->auditlog("saveAttachment error", $stmt->errorInfo());
-
-                } else {
-
-                    // Move the file from temp folder to html attachments folder
+          					// JSON was double-encoded, so it needs to be double decoded
+          					$errorsList = json_decode(json_decode($response))->errors;
+          					foreach ($errorsList as $err) {
+          						$errors[] = $err;
+          					}
+          					if (sizeof($errors) == 0) {
+          						$errors[] = "Bad input";
+          					}
+          				} else if($httpCode == 500) {
+          					$errorsList = json_decode(json_decode($response))->errors;
+          					foreach ($errorsList as $err) {
+          						$errors[] = $err;
+          					}
+          					if (sizeof($errors) == 0) {
+          						$errors[] = "Server error";
+          					}
+          				} else if($httpCode == 200) {
                     move_uploaded_file($attachment['tmp_name'], getcwd() . '/attachments/' . $attachmentid . '-' . $attachment['name']);
                     $attachmentname = $attachment["name"];
                     $this->auditlog("saveAttachment", "success: $attachmentname");
+          				}
+          			}
 
-                }
+          			curl_close($ch);
 
             }
 
@@ -1505,7 +1525,6 @@ class Application {
                 $isadmin = $this->isAdmin($errors, $loggedinuserid);
             }
 
-            // Stop people from viewing someone else's profile
             if (!$isadmin && $loggedinuserid != $userid) {
 
                 $errors[] = "Cannot view other user";
@@ -1589,7 +1608,6 @@ class Application {
                 $isadmin = $this->isAdmin($errors, $loggedinuserid);
             }
 
-            // Stop people from editing someone else's profile
             if (!$isadmin && $loggedinuserid != $userid) {
 
                 $errors[] = "Cannot edit other user";
@@ -1614,7 +1632,6 @@ class Application {
                     // Connect to the database
                     $dbh = $this->getConnection();
 
-                    // Hash the user's password
                     $passwordhash = password_hash($password, PASSWORD_DEFAULT);
 
                     // Construct a SQL statement to perform the select operation
