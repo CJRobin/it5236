@@ -1553,7 +1553,7 @@ class Application {
         }
 
         // Return the list of users
-        //return $users;
+        return $users;
 
     }
 
