@@ -1691,7 +1691,7 @@ class Application {
 
                     $passwordhash = password_hash($password, PASSWORD_DEFAULT);
                     $adminFlag = ($isadminDB ? "1" : "0");
-                    $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/addcomment";
+                    $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/updateuser";
                     $data = array(
                       'username'=>$username,
                       'email'=>$email,
@@ -1767,121 +1767,66 @@ class Application {
         // Only proceed if there are no validation errors
         if (sizeof($errors) == 0) {
 
-            // Connect to the database
-            $dbh = $this->getConnection();
+          $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/passwordreset";
+          $data = array(
+            'username'=>$usernameOrEmail,
+            'email'=>$usernameOrEmail
+          );
+          $data_json = json_encode($data);
+          $ch = curl_init();
+          curl_setopt($ch, CURLOPT_URL, $url);
+          curl_setopt($ch, CURLOPT_HTTPHEADER, array('x-api-key: OZ80hhKCvG8ecUWDMTcpGaLAWDswZeMP31Axs9NI', 'Content-Type: application/json','Content-Length: ' . strlen($data_json)));
+          curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+          curl_setopt($ch, CURLOPT_POSTFIELDS, $data_json);
+          curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+          $response  = curl_exec($ch);
+          $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+          if ($response === FALSE) {
+            $this->auditlog("passwordReset error", $stmt->errorInfo());
+            $errors[] = "An unexpected error occurred saving your request to the database.";
+            $this->debug($stmt->errorInfo());
+          } else {
+            if($httpCode == 400) {
 
-            // Construct a SQL statement to perform the insert operation
-            $sql = "SELECT email, userid FROM users WHERE username = :username OR email = :email";
+              // JSON was double-encoded, so it needs to be double decoded
+              $errorsList = json_decode(json_decode($response))->errors;
+              foreach ($errorsList as $err) {
+                $errors[] = $err;
+              }
+              if (sizeof($errors) == 0) {
+                $errors[] = "Bad input";
+              }
+              curl_close($ch);
+            } else if($httpCode == 500) {
+              $errorsList = json_decode(json_decode($response))->errors;
+              foreach ($errorsList as $err) {
+                $errors[] = $err;
+              }
+              if (sizeof($errors) == 0) {
+                $errors[] = "Server error";
+              }
+              curl_close($ch);
+            } else if($httpCode == 200) {
+              $this->auditlog("passwordReset", "Sending message to $email");
 
-            // Run the SQL select and capture the result code
-            $stmt = $dbh->prepare($sql);
-            $stmt->bindParam(":username", $usernameOrEmail);
-            $stmt->bindParam(":email", $usernameOrEmail);
-            $result = $stmt->execute();
+              // Send reset email
+              $pageLink = (isset($_SERVER['HTTPS']) ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+              $pageLink = str_replace("reset.php", "password.php", $pageLink);
+              $to      = $email;
+              $subject = 'Password reset';
+              $message = "A password reset request for this account has been submitted at https://russellthackston.me. ".
+                  "If you did not make this request, please ignore this message. No other action is necessary. ".
+                  "To reset your password, please click the following link: $pageLink?id=$passwordresetid";
+              $headers = 'From: webmaster@russellthackston.me' . "\r\n" .
+                  'Reply-To: webmaster@russellthackston.me' . "\r\n";
 
-            // If the query did not run successfully, add an error message to the list
-            if ($result === FALSE) {
+              mail($to, $subject, $message, $headers);
 
-                $this->auditlog("passwordReset error", $stmt->errorInfo());
-                $errors[] = "An unexpected error occurred saving your request to the database.";
-                $this->debug($stmt->errorInfo());
-
-            } else {
-
-                if ($stmt->rowCount() == 1) {
-
-                    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-                    $passwordresetid = bin2hex(random_bytes(16));
-                    $userid = $row['userid'];
-                    $email = $row['email'];
-
-                    // Construct a SQL statement to perform the insert operation
-                    $sql = "INSERT INTO passwordreset (passwordresetid, userid, email, expires) " .
-                        "VALUES (:passwordresetid, :userid, :email, DATE_ADD(NOW(), INTERVAL 1 HOUR))";
-
-                    // Run the SQL select and capture the result code
-                    $stmt = $dbh->prepare($sql);
-                    $stmt->bindParam(":passwordresetid", $passwordresetid);
-                    $stmt->bindParam(":userid", $userid);
-                    $stmt->bindParam(":email", $email);
-                    $result = $stmt->execute();
-
-                    $this->auditlog("passwordReset", "Sending message to $email");
-
-                    // Send reset email
-                    $pageLink = (isset($_SERVER['HTTPS']) ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-                    $pageLink = str_replace("reset.php", "password.php", $pageLink);
-                    $to      = $email;
-                    $subject = 'Password reset';
-                    $message = "A password reset request for this account has been submitted at https://russellthackston.me. ".
-                        "If you did not make this request, please ignore this message. No other action is necessary. ".
-                        "To reset your password, please click the following link: $pageLink?id=$passwordresetid";
-                    $headers = 'From: webmaster@russellthackston.me' . "\r\n" .
-                        'Reply-To: webmaster@russellthackston.me' . "\r\n";
-
-                    mail($to, $subject, $message, $headers);
-
-                    $this->auditlog("passwordReset", "Message sent to $email");
-
-
-                } else {
-
-                    $this->auditlog("passwordReset", "Bad request for $usernameOrEmail");
-
-                }
+              $this->auditlog("passwordReset", "Message sent to $email");
+              curl_close($ch);
 
             }
-
-            // Close the connection
-            $dbh = NULL;
-
-        }
-
-    }
-
-    // Validates a provided username or email address and sends a password reset email
-    public function updatePassword($password, $passwordresetid, &$errors) {
-
-        // Check for a valid username/email
-        $this->validatePassword($password, $errors);
-        if (empty($passwordresetid)) {
-            $errors[] = "Missing passwordrequestid";
-        }
-
-        // Only proceed if there are no validation errors
-        if (sizeof($errors) == 0) {
-
-            // Connect to the database
-            $dbh = $this->getConnection();
-
-            // Construct a SQL statement to perform the insert operation
-            $sql = "SELECT userid FROM passwordreset WHERE passwordresetid = :passwordresetid AND expires > NOW()";
-
-            // Run the SQL select and capture the result code
-            $stmt = $dbh->prepare($sql);
-            $stmt->bindParam(":passwordresetid", $passwordresetid);
-            $result = $stmt->execute();
-
-            // If the query did not run successfully, add an error message to the list
-            if ($result === FALSE) {
-
-                $errors[] = "An unexpected error occurred updating your password.";
-                $this->auditlog("updatePassword", $stmt->errorInfo());
-                $this->debug($stmt->errorInfo());
-
-            } else if ($stmt->rowCount() == 1) {
-
-                $row = $stmt->fetch(PDO::FETCH_ASSOC);
-                $userid = $row['userid'];
-                $this->updateUserPassword($userid, $password, $errors);
-                $this->clearPasswordResetRecords($passwordresetid);
-
-            } else {
-
-                $this->auditlog("updatePassword", "Bad request id: $passwordresetid");
-
-            }
+          }
 
         }
 
