@@ -1843,35 +1843,45 @@ class Application {
         // Assume an empty list of topics
         $types = array();
 
-        // Connect to the database
-        $dbh = $this->getConnection();
-
-        // Construct a SQL statement to perform the select operation
-        $sql = "SELECT attachmenttypeid, name, extension FROM attachmenttypes ORDER BY name";
-
-        // Run the SQL select and capture the result code
-        $stmt = $dbh->prepare($sql);
-        $result = $stmt->execute();
-
-        // If the query did not run successfully, add an error message to the list
-        if ($result === FALSE) {
-
-            $errors[] = "An unexpected error occurred getting the attachment types list.";
-            $this->debug($stmt->errorInfo());
-            $this->auditlog("getattachmenttypes error", $stmt->errorInfo());
-
-            // If the query ran successfully, then get the list of users
+        $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/getattachmenttypes";
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('x-api-key: OZ80hhKCvG8ecUWDMTcpGaLAWDswZeMP31Axs9NI'));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $response  = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        if ($response === FALSE) {
+          $errors[] = "An unexpected error occurred getting the attachment types list.";
+          $this->debug($stmt->errorInfo());
+          $this->auditlog("getattachmenttypes error", $stmt->errorInfo());
         } else {
+          if($httpCode == 400) {
 
-            // Get all the rows
-            $types = $stmt->fetchAll();
+            // JSON was double-encoded, so it needs to be double decoded
+            $errorsList = json_decode(json_decode($response))->errors;
+            foreach ($errorsList as $err) {
+              $errors[] = $err;
+            }
+            if (sizeof($errors) == 0) {
+              $errors[] = "Bad input";
+            }
+            curl_close($ch);
+          } else if($httpCode == 500) {
+            $errorsList = json_decode(json_decode($response))->errors;
+            foreach ($errorsList as $err) {
+              $errors[] = $err;
+            }
+            if (sizeof($errors) == 0) {
+              $errors[] = "Server error";
+            }
+            curl_close($ch);
+          } else if($httpCode == 200) {
+            $types = json_decode($response, true);
             $this->auditlog("getattachmenttypes", "success");
-
+            curl_close($ch);
+            return $types;
+          }
         }
-
-        // Close the connection
-        $dbh = NULL;
-
         // Return the list of users
         return $types;
 
