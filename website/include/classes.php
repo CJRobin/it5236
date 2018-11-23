@@ -1766,11 +1766,12 @@ class Application {
 
         // Only proceed if there are no validation errors
         if (sizeof($errors) == 0) {
-
+          $passwordresetid = bin2hex(random_bytes(16));
           $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/passwordreset";
           $data = array(
             'username'=>$usernameOrEmail,
-            'email'=>$usernameOrEmail
+            'email'=>$usernameOrEmail,
+            'passwordresetid'=>$passwordresetid
           );
           $data_json = json_encode($data);
           $ch = curl_init();
