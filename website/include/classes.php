@@ -1686,9 +1686,6 @@ class Application {
                 // Only try to update the data into the database if there are no validation errors
                 if (sizeof($errors) == 0) {
 
-                    // Connect to the database
-                    $dbh = $this->getConnection();
-
                     $passwordhash = password_hash($password, PASSWORD_DEFAULT);
                     $adminFlag = ($isadminDB ? "1" : "0");
                     $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/updateuser";
