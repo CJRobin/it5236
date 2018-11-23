@@ -1690,38 +1690,55 @@ class Application {
                     $dbh = $this->getConnection();
 
                     $passwordhash = password_hash($password, PASSWORD_DEFAULT);
+                    $adminFlag = ($isadminDB ? "1" : "0");
+                    $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/addcomment";
+                    $data = array(
+                      'username'=>$username,
+                      'email'=>$email,
+                      'admin'=>$adminFlag,
+                      'password'=>$passwordhash,
+                      'userid'=>$userid
+                    );
+                    $data_json = json_encode($data);
+                    $ch = curl_init();
+                    curl_setopt($ch, CURLOPT_URL, $url);
+                    curl_setopt($ch, CURLOPT_HTTPHEADER, array('x-api-key: OZ80hhKCvG8ecUWDMTcpGaLAWDswZeMP31Axs9NI', 'Content-Type: application/json','Content-Length: ' . strlen($data_json)));
+                    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+                    curl_setopt($ch, CURLOPT_POSTFIELDS, $data_json);
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                    $response  = curl_exec($ch);
+                    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    if ($response === FALSE) {
+                      $errors[] = "An unexpected error occurred saving the user profile. ";
+                      $this->debug($stmt->errorInfo());
+                      $this->auditlog("updateUser error", $stmt->errorInfo());
+                    } else {
+                      if($httpCode == 400) {
 
-                    // Construct a SQL statement to perform the select operation
-                    $sql = 	"UPDATE users SET username=:username, email=:email " .
-                        ($loggedinuserid != $userid ? ", isadmin=:isAdmin " : "") .
-                        (!empty($password) ? ", passwordhash=:passwordhash" : "") .
-                        " WHERE userid = :userid";
-
-                        // Run the SQL select and capture the result code
-                        $stmt = $dbh->prepare($sql);
-                        $stmt->bindParam(":username", $username);
-                        $stmt->bindParam(":email", $email);
-                        $adminFlag = ($isadminDB ? "1" : "0");
-                        if ($loggedinuserid != $userid) {
-                            $stmt->bindParam(":isAdmin", $adminFlag);
+                        // JSON was double-encoded, so it needs to be double decoded
+                        $errorsList = json_decode(json_decode($response))->errors;
+                        foreach ($errorsList as $err) {
+                          $errors[] = $err;
                         }
-                        if (!empty($password)) {
-                            $stmt->bindParam(":passwordhash", $passwordhash);
+                        if (sizeof($errors) == 0) {
+                          $errors[] = "Bad input";
                         }
-                        $stmt->bindParam(":userid", $userid);
-                        $result = $stmt->execute();
-
-                        // If the query did not run successfully, add an error message to the list
-                        if ($result === FALSE) {
-                            $errors[] = "An unexpected error occurred saving the user profile. ";
-                            $this->debug($stmt->errorInfo());
-                            $this->auditlog("updateUser error", $stmt->errorInfo());
-                        } else {
-                            $this->auditlog("updateUser", "success");
+                        curl_close($ch);
+                      } else if($httpCode == 500) {
+                        $errorsList = json_decode(json_decode($response))->errors;
+                        foreach ($errorsList as $err) {
+                          $errors[] = $err;
                         }
+                        if (sizeof($errors) == 0) {
+                          $errors[] = "Server error";
+                        }
+                        curl_close($ch);
+                      } else if($httpCode == 200) {
+                        $this->auditlog("updateUser", "success");
+                        curl_close($ch);
 
-                        // Close the connection
-                        $dbh = NULL;
+                      }
+                    }
                 } else {
                     $this->auditlog("updateUser validation error", $errors);
                 }
