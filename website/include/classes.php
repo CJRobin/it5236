@@ -1813,7 +1813,7 @@ class Application {
               // Send reset email
               $pageLink = (isset($_SERVER['HTTPS']) ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
               $pageLink = str_replace("reset.php", "password.php", $pageLink);
-              $to      = $email;
+              $to      = $response;
               $subject = 'Password reset';
               $message = "A password reset request for this account has been submitted at https://russellthackston.me. ".
                   "If you did not make this request, please ignore this message. No other action is necessary. ".
