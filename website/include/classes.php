@@ -1,10 +1,10 @@
 <?php
-if (file_exists(getcwd() . "/include/credentials.php")) {
+/* if (file_exists(getcwd() . "/include/credentials.php")) {
     require('credentials.php');
 } else {
     echo "Application has not been configured. Copy and edit the credentials-sample.php file to credentials.php.";
     exit();
-}
+} */
 
 class Application {
 
@@ -364,7 +364,7 @@ class Application {
 
           $url = "https://zcz3dwfpn5.execute-api.us-east-1.amazonaws.com/default/processemailvalidation";
           $data = array(
-            'emailvalidationid'=>$validationid
+            'emailvalidationid'=>$validationid,
           );
           $data_json = json_encode($data);
           $ch = curl_init();
@@ -400,7 +400,6 @@ class Application {
               }
             } else if($httpCode == 200) {
               $this->auditlog("processEmailValidation", "Email address validated: $validationid");
-              $this->newSession(json_decode($response, true)[0]['userid'], $errors);
               $success = true;
             }
           }
