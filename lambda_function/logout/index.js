@@ -9,6 +9,7 @@ function formatErrorResponse(code, errs) {
 }
 
 exports.handler = (event, context, callback) => {
+	
 	var conn = mysql.createConnection({
 		host 	: config.dbhost,
 		user 	: config.dbuser,
@@ -28,8 +29,10 @@ exports.handler = (event, context, callback) => {
 		conn.query(sql, [event.sessionid], function (err, result) {
 		    if (err) {
 				// This should be a "Internal Server Error" error
+				conn.end();
 				callback(formatErrorResponse('INTERNAL_SERVER_ERROR', [err]));
 		  	} else {
+		  		conn.end();
 		    	callback(null,"user logout successful");
 		  	}
 		});
